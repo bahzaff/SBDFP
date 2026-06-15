@@ -1,0 +1,6 @@
+mysql-connector-python
+pymongo
+plotext
+pandas
+openpyxl
+python-dotenv

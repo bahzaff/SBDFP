@@ -1,0 +1,188 @@
+db.reviews.insertMany([
+
+  {
+
+  "id_penghuni": 1,
+
+  "id_kamar": 1,
+
+  "rating": 5,
+
+  "komentar": "Kamarnya bersih dan nyaman.",
+
+  "tanggal_review": "2026-06-01",
+
+  "balasan_pemilik": {
+
+    "isi": "Terima kasih atas ulasannya.",
+
+    "tanggal_balasan": "2026-06-02"
+
+  },
+
+  "tags": ["bersih", "nyaman"]
+
+},
+
+{
+
+  "id_penghuni": 2,
+
+  "id_kamar": 3,
+
+  "rating": 4,
+
+  "komentar": "WiFi cukup cepat dan lingkungan tenang.",
+
+  "tanggal_review": "2026-06-03",
+
+  "balasan_pemilik": {
+
+    "isi": "Terima kasih atas masukannya.",
+
+    "tanggal_balasan": "2026-06-04"
+
+  },
+
+  "tags": ["wifi-cepat", "tenang"]
+
+},
+
+{
+
+  "id_penghuni": 3,
+
+  "id_kamar": 4,
+
+  "rating": 3,
+
+  "komentar": "Kamar cukup nyaman, tetapi AC kurang dingin.",
+
+  "tanggal_review": "2026-06-05",
+
+  "tags": ["AC"]
+
+},
+
+{
+
+  "id_penghuni": 4,
+
+  "id_kamar": 6,
+
+  "rating": 2,
+
+  "komentar": "Kebersihan kamar mandi perlu ditingkatkan.",
+
+  "tanggal_review": "2026-06-06",
+
+  "tags": ["kamar-mandi"]
+
+},
+
+{
+
+  "id_penghuni": 5,
+
+  "id_kamar": 7,
+
+  "rating": 5,
+
+  "komentar": "Fasilitas lengkap dan sangat memuaskan.",
+
+  "tanggal_review": "2026-06-07",
+
+  "balasan_pemilik": {
+
+    "isi": "Terima kasih, semoga betah.",
+
+    "tanggal_balasan": "2026-06-08"
+
+  },
+
+  "tags": ["fasilitas-lengkap", "memuaskan"]
+
+},
+
+{
+
+  "id_penghuni": 6,
+
+  "id_kamar": 9,
+
+  "rating": 4,
+
+  "komentar": "Lingkungan aman dan nyaman.",
+
+  "tanggal_review": "2026-06-08",
+
+  "tags": ["aman", "nyaman"]
+
+},
+
+{
+
+  "id_penghuni": 7,
+
+  "id_kamar": 2,
+
+  "rating": 5,
+
+  "komentar": "Harga sesuai dengan kualitas kamar.",
+
+  "tanggal_review": "2026-06-09",
+
+  "tags": ["harga-terjangkau"]
+
+},
+
+{
+
+  "id_penghuni": 8,
+
+  "id_kamar": 5,
+
+  "rating": 3,
+
+  "komentar": "Lokasi strategis dekat kampus.",
+
+  "tanggal_review": "2026-06-10",
+
+  "tags": ["dekat-kampus"]
+
+},
+
+{
+
+  "id_penghuni": 9,
+
+  "id_kamar": 10,
+
+  "rating": 4,
+
+  "komentar": "Pemilik kos responsif.",
+
+  "tanggal_review": "2026-06-11",
+
+  "tags": ["pemilik-ramah"]
+
+},
+
+{
+
+  "id_penghuni": 10,
+
+  "id_kamar": 8,
+
+  "rating": 2,
+
+  "komentar": "Perlu perbaikan pada fasilitas internet.",
+
+  "tanggal_review": "2026-06-12",
+
+  "tags": ["internet"]
+
+}
+
+]) 
+
