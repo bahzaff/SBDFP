@@ -1,6 +1,6 @@
 # Dokumentasi Sistem Manajemen Kos (KOSKU)
 
-Dokumentasi ini berisi panduan penggunaan lengkap, teknologi pendukung, serta **Penjelasan Full Code (Bedah Kode)** secara utuh baris demi baris untuk seluruh file yang ada di dalam proyek ini.
+Dokumentasi ini berisi panduan penggunaan lengkap, teknologi pendukung, serta **Penjelasan Full Code (Bedah Kode)** yang dibedah **per fungsi / per bagian** secara mendetail.
 
 ---
 
@@ -24,56 +24,47 @@ Proyek ini mengadaptasi arsitektur **MVC (Model-View-Controller)** sederhana yan
 
 ---
 
-## 📖 Penjelasan Full Code
+## 📖 Penjelasan Full Code (Per Fungsi / Bagian)
 
-Berikut adalah kode lengkap dari setiap file beserta penjelasan baris demi barisnya.
+Berikut adalah bedah tuntas seluruh *source code* yang dipecah dan dijelaskan setiap blok fungsinya.
 
-### 1. `main.py` (Menu Utama)
-File ini adalah gerbang utama yang bertugas merutekan (router) navigasi aplikasi CLI.
+### 1. File: `main.py` (Menu Utama)
 
+#### Bagian 1: Import Modul
 ```python
 import sys
 from controllers.setup_controller import setup_database
 from controllers.mysql_controller import menu_cek_kamar_kosong, menu_cek_kontrak_hampir_habis, menu_rekap_tagihan_denda
 from controllers.mongo_controller import menu_cari_review_mongodb
 from controllers.chart_controller import menu_grafik_status_kamar, menu_grafik_distribusi_rating
+```
+**Penjelasan:** 
+- `import sys`: Digunakan khusus untuk mengeksekusi perintah mematikan program secara total (`sys.exit`).
+- `from controllers...`: Memanggil seluruh fungsi operasional yang sudah disebar ke sub-folder `controllers/` agar file utama ini tetap bersih.
 
-# ==============================================================================
-# PROGRAM UTAMA (CLI INTERAKTIF)
-# ==============================================================================
-
+#### Bagian 2: Fungsi Main (Antarmuka CLI)
+```python
 def main():
     while True:
         print("\n" + "="*50)
         print("           SISTEM MANAJEMEN KOS (KOSKU)           ")
         print("="*50)
         print("0. Setup & Inisialisasi Database (Jalankan Awal)  ")
-        print("-" * 50)
-        print("1. Cek Kamar Kosong (MySQL)")
-        print("2. Cek Kontrak Hampir Habis (MySQL)")
-        print("3. Rekap Tagihan & Denda (MySQL JOIN)")
-        print("4. Cari Review MongoDB (MongoDB)")
-        print("5. Grafik Status Kamar (MySQL & Plotext)")
-        print("6. Grafik Distribusi Rating (MongoDB & Plotext)")
-        print("7. Keluar")
-        print("="*50)
+        # ... (Print Pilihan 1 sampai 7)
         
         pilihan = input("Pilih menu navigasi (0-7): ")
-        
+```
+**Penjelasan:** 
+- `while True:`: Konstruksi perulangan abadi. Ini memastikan bahwa setelah pengguna menjalankan suatu fitur (misal: Cek Kamar Kosong), program tidak langsung tertutup, melainkan akan kembali mencetak Menu Utama berulang kali sampai user sengaja memilih menu nomor 7 (Keluar).
+- `input(...)`: Meminta masukan teks dari pengguna dan menyimpannya di variabel `pilihan`.
+
+#### Bagian 3: Router Menu & Exit
+```python
         if pilihan == '0':
             setup_database()
         elif pilihan == '1':
             menu_cek_kamar_kosong()
-        elif pilihan == '2':
-            menu_cek_kontrak_hampir_habis()
-        elif pilihan == '3':
-            menu_rekap_tagihan_denda()
-        elif pilihan == '4':
-            menu_cari_review_mongodb()
-        elif pilihan == '5':
-            menu_grafik_status_kamar()
-        elif pilihan == '6':
-            menu_grafik_distribusi_rating()
+        # ... (elif 2 sampai 6)
         elif pilihan == '7':
             print("Sistem ditutup. Terima kasih!")
             sys.exit(0)
@@ -83,30 +74,30 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-**Penjelasan Kode:**
-- Baris 1-5: Mengimpor modul `sys` (untuk mematikan program) dan memanggil seluruh fungsi menu dari sub-folder `controllers/`.
-- `def main():`: Ini adalah fungsi inisialisasi awal.
-- `while True:`: Menjaga program agar tidak langsung tertutup setelah mengeksekusi 1 perintah. Program akan terus kembali mencetak menu sampai dipaksa mati.
-- `pilihan = input(...)`: Menunggu ketikan keyboard dari user. Input tersebut dicek menggunakan `if-elif` untuk menjalankan fungsi yang sesuai.
-- `sys.exit(0)`: Perintah mutlak untuk membunuh sistem operasi Python.
-- `if __name__ == "__main__":`: Memastikan bahwa fungsi `main()` otomatis berjalan ketika file `main.py` dieksekusi secara langsung.
+**Penjelasan:**
+- Rangkaian `if-elif` digunakan layaknya *Switch-Case* untuk mengarahkan pilihan user ke fungsi controller yang tepat.
+- `sys.exit(0)`: Perintah ini memberi sinyal ke *Sistem Operasi Windows* untuk menghentikan terminal Python tanpa *error* (kode 0 berarti aman).
+- `if __name__ == "__main__":`: Baris sakti di Python. Memastikan fungsi `main()` hanya berjalan apabila file `main.py` yang diklik/dijalankan langsung, bukan ketika di-import oleh file lain.
 
 ---
 
-### 2. `config/database.py` (Koneksi Server)
-File ini merangkum semua pengaturan dan keamanan penghubung antara Python dan Database.
+### 2. File: `config/database.py` (Koneksi Server)
 
+#### Bagian 1: Inisialisasi Environment
 ```python
 import os
 import mysql.connector
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
-# Memuat konfigurasi dari .env
 load_dotenv()
+```
+**Penjelasan:** 
+- `load_dotenv()`: Bertugas membaca file `.env` di proyek Anda lalu memasukkan kredensial rahasia (seperti Password database) ke dalam memori aplikasi secara aman.
 
+#### Bagian 2: Konektor MySQL
+```python
 def get_mysql_connection():
-    """Membuat koneksi ke server MySQL (kosku_db)."""
     try:
         conn = mysql.connector.connect(
             host=os.getenv("MYSQL_HOST", "localhost"),
@@ -117,9 +108,14 @@ def get_mysql_connection():
     except mysql.connector.Error as err:
         print(f"[Error] Gagal menghubungkan ke MySQL: {err}")
         return None
+```
+**Penjelasan:**
+- Mencoba menghubungi MySQL menggunakan IP/Localhost yang disetting. 
+- **Penting:** Kami *sengaja* tidak menambahkan parameter `database=...` di awal koneksi ini karena pada saat awal di-run, database `kosku_db` itu sendiri belum ada dan baru akan dibuat melalui *Menu 0*.
 
+#### Bagian 3: Fungsi Pembantu (Helper) MySQL
+```python
 def run_query_mysql(query, params=None, fetch=True):
-    """Fungsi helper untuk mengeksekusi query MySQL."""
     conn = get_mysql_connection()
     if not conn: return None
     
@@ -131,146 +127,144 @@ def run_query_mysql(query, params=None, fetch=True):
         conn.commit()
         return result
     except Exception as e:
-        print(f"[Error] Eksekusi query gagal: {e}")
-        return None
+        # handle error...
     finally:
         if conn.is_connected():
             cursor.close()
             conn.close()
+```
+**Penjelasan:**
+- Ini adalah fungsi tulang punggung aplikasi (Helper). Tujuannya agar kita tidak menulis ulang blok koneksi panjang ini di setiap fitur. Semua Controller MySQL hanya perlu memanggil fungsi ini.
+- `cursor(dictionary=True)`: Memaksa MySQL agar mengembalikan data dalam format JSON/Dictionary (Contoh: `row['nama']`), bukan dalam format tuple indeks kaku (`row[0]`).
+- `USE kosku_db`: Otomatis berpindah ke database `kosku_db` sebelum mengeksekusi SQL.
+- `finally: conn.close()`: Menjamin agar gerbang server MySQL langsung ditutup setelah query selesai dieksekusi agar memori tidak bocor/overload.
 
+#### Bagian 4: Konektor MongoDB
+```python
 def get_mongo_connection():
-    """Membuat koneksi ke server MongoDB."""
     try:
         client = MongoClient(os.getenv("MONGO_URI", "mongodb://localhost:27017/"), serverSelectionTimeoutMS=2000)
         client.admin.command('ping') 
         db = client[os.getenv("MONGO_DB", "kosku_db")]
         return db
-    except Exception as e:
-        print(f"[Error] Gagal menghubungkan ke MongoDB: {e}")
-        return None
+    # ...
 ```
-**Penjelasan Kode:**
-- `load_dotenv()`: Fitur rahasia dari `.env`. Membaca kredensial agar *password database* tidak terekspos langsung di *source code*.
-- `get_mysql_connection()`: Mencoba menyambung ke server MySQL menggunakan IP/localhost. Tanpa mendefinisikan "Nama Database" secara sengaja, agar saat *seeding* kita bisa mengeksekusi perintah *CREATE DATABASE* baru.
-- `run_query_mysql()`: **Fungsi helper andalan.** Alih-alih menulis *cursor*, *try-except*, dan *commit* di setiap menu, kode tersebut ditampung terpusat di fungsi ini. Fungsi ini akan menerima string SQL, mengeksekusi `USE kosku_db`, menarik semua hasil (`fetchall`), lalu secara otomatis **menutup koneksi (`conn.close()`)** agar server tidak *overload*.
-- `get_mongo_connection()`: Menghubungi MongoDB lewat IP port 27017. Baris `client.admin.command('ping')` krusial untuk "mengetuk gerbang" server agar kalau MongoDB mati, program langsung masuk ke area `except`.
+**Penjelasan:**
+- Membuat koneksi *client* ke port MongoDB (`27017`).
+- `serverSelectionTimeoutMS=2000`: Membatasi waktu tunggu menjadi maksimal 2 detik.
+- `client.admin.command('ping')`: Secara harafiah mengetuk pintu server. Tanpa baris ini, aplikasi python mungkin tidak sadar kalau MongoDB lokal Anda sedang mati.
 
 ---
 
-### 3. `controllers/setup_controller.py` (Seeding / Impor Data Asli)
-Membaca `dataset_koskufp.xlsx` & `review_seed.JSON`, membuat skema tabel, dan menginput datanya.
+### 3. File: `controllers/setup_controller.py` (Seeding / Import)
 
+#### Bagian 1: Inisiasi Database & Tabel Baru (Drop)
 ```python
-import pandas as pd
-import json
-import os
-from config.database import get_mysql_connection, get_mongo_connection
-
+# ... import pandas, json, dll
 def setup_database():
-    print("\n--- Memulai Setup & Inisialisasi Database ---")
-    
-    # 1. SETUP MYSQL
     mysql_conn = get_mysql_connection()
-    if mysql_conn:
-        try:
-            cursor = mysql_conn.cursor()
-            db_name = os.getenv("MYSQL_DATABASE", "kosku_db")
-            
-            cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
-            cursor.execute(f"USE {db_name}")
-            
-            # Drop secara terbalik (Child -> Parent)
-            for tabel in ['Notifikasi', 'Denda', 'Pembayaran', 'Kontrak', 'Penghuni', 'Kamar']:
-                cursor.execute(f"DROP TABLE IF EXISTS {tabel}")
-            
-            # Create Table (DDL)
-            cursor.execute("""
-                CREATE TABLE Kamar (
-                    id_kamar INT PRIMARY KEY,
-                    nomor_kamar VARCHAR(10),
-                    tipe_kamar VARCHAR(50),
-                    harga_sewa DECIMAL(15,2),
-                    status_kamar VARCHAR(20),
-                    fasilitas TEXT
-                )
-            """)
-            # ... (Tabel Penghuni, Kontrak, Pembayaran, Denda, Notifikasi)
-            
-            print("[MySQL] Membaca dan mem-parsing dataset_koskufp.xlsx...")
-            df = pd.read_excel('dataset_koskufp.xlsx', header=None)
-            
-            # Pandas iloc Coordinate Slicing
-            kamar_df = df.iloc[4:12, 1:6].copy()
-            kamar_df.columns = ['nomor_kamar', 'tipe_kamar', 'harga_sewa', 'status_kamar', 'fasilitas']
-            kamar_df.insert(0, 'id_kamar', range(1, len(kamar_df) + 1))
-            
-            # ... (Slicing untuk tabel-tabel lainnya)
-            
-            def insert_df_to_mysql(data_df, table_name):
-                data_df = data_df.where(pd.notnull(data_df), None) # Mengatasi nilai kosong (NaN -> NULL)
-                cols = ", ".join([str(i) for i in data_df.columns.tolist()])
-                placeholders = ", ".join(["%s"] * len(data_df.columns))
-                sql = f"INSERT INTO {table_name} ({cols}) VALUES ({placeholders})"
-                
-                data_tuples = [tuple(x) for x in data_df.to_numpy()]
-                cursor.executemany(sql, data_tuples)
-                mysql_conn.commit()
-
-            insert_df_to_mysql(kamar_df, 'Kamar')
-            # ... (Insert fungsi untuk lainnya)
-            
-            cursor.close()
-        except Exception as e:
-            print(f"[Error] Gagal saat setup MySQL: {e}")
-        finally:
-            if mysql_conn.is_connected():
-                mysql_conn.close()
+    cursor = mysql_conn.cursor()
+    db_name = os.getenv("MYSQL_DATABASE", "kosku_db")
     
-    # 2. SETUP MONGODB
-    mongo_db = get_mongo_connection()
-    if mongo_db is not None:
-        try:
-            collection = mongo_db['reviews']
-            collection.drop() # Hapus duplikat
-            
-            with open('review_seed.JSON', 'r', encoding='utf-8') as file:
-                content = file.read().strip()
-                
-            # Membersihkan Javascript Code
-            if content.startswith('db.reviews.insertMany('):
-                content = content.replace('db.reviews.insertMany(', '')
-                if content.endswith(')'):
-                    content = content[:-1]
-                    
-            reviews_data = json.loads(content)
-            if reviews_data:
-                collection.insert_many(reviews_data)
-        except Exception as e:
-            pass
+    cursor.execute(f"CREATE DATABASE IF NOT EXISTS {db_name}")
+    cursor.execute(f"USE {db_name}")
+    
+    for tabel in ['Notifikasi', 'Denda', 'Pembayaran', 'Kontrak', 'Penghuni', 'Kamar']:
+        cursor.execute(f"DROP TABLE IF EXISTS {tabel}")
 ```
-**Penjelasan Kode:**
-- `DROP TABLE IF EXISTS`: Mengapa dibalik dari urutan tabel aslinya? Karena MySQL memiliki aturan **Foreign Key**. Tabel anak (seperti Denda) yang bergantung pada tabel induk (Pembayaran) harus dilenyapkan lebih dulu, agar tidak terjadi constraint error saat di-drop.
-- `df = pd.read_excel('...', header=None)`: Mengabaikan struktur Excel default karena di file Anda tabelnya berjejeran berantakan.
-- `df.iloc[4:12, 1:6]`: Inilah cara mengekstrak tabel unik. `iloc` menseleksi secara spasial di baris ke-4 s/d 11, dan kolom ke-1 s/d 5.
-- `df.where(pd.notnull(df), None)`: Pandas mengkonversi kotak excel yang kosong menjadi *NaN* (Not a Number). Fungsi ini mengganti NaN menjadi *None* agar dimengerti MySQL sebagai NULL murni.
-- Blok *Replace String MongoDB*: Baris logika if untuk menghapus awalan `db.reviews.insertMany(` di dalam file JSON buatan Anda agar benar-benar menjadi file teks JSON murni sebelum diubah jadi dictionary Python (`json.loads`).
+**Penjelasan:**
+- `CREATE DATABASE`: Murni DDL (Data Definition Language) untuk membangun skema.
+- `DROP TABLE` Terbalik: Urutan nama array dimulai dari 'Notifikasi' mundur hingga ke 'Kamar'. Mengapa? Karena aturan ketat **Foreign Key Constraint** MySQL; Tabel "Anak" yang menumpang pada tabel "Induk" harus dihapus terlebih dahulu, jika tidak MySQL akan menolaknya.
+
+#### Bagian 2: Pembuatan DDL (Tabel MySQL)
+```python
+    cursor.execute("""
+        CREATE TABLE Kamar (
+            id_kamar INT PRIMARY KEY,
+            nomor_kamar VARCHAR(10),
+            tipe_kamar VARCHAR(50),
+            harga_sewa DECIMAL(15,2),
+            status_kamar VARCHAR(20),
+            fasilitas TEXT
+        )
+    """)
+    # (Kode di atas diulang untuk tabel Penghuni, Kontrak, dll)
+```
+**Penjelasan:**
+- Membentuk kerangka masing-masing tabel. Harga sewa didefinisikan sebagai `DECIMAL` untuk menyimpan nominal uang yang sangat akurat tanpa pembulatan *float*.
+
+#### Bagian 3: Membaca & Memotong Koordinat Excel
+```python
+    df = pd.read_excel('dataset_koskufp.xlsx', header=None)
+    
+    kamar_df = df.iloc[4:12, 1:6].copy()
+    kamar_df.columns = ['nomor_kamar', 'tipe_kamar', 'harga_sewa', 'status_kamar', 'fasilitas']
+    kamar_df.insert(0, 'id_kamar', range(1, len(kamar_df) + 1))
+    # (Kode serupa dilakukan untuk Penghuni, Kontrak, dst)
+```
+**Penjelasan:**
+- Dikarenakan file *dataset_koskufp.xlsx* Anda menyatukan banyak tabel di sembarang tempat pada sheet yang sama, maka `pandas` diinstruksikan tidak membaca *Header* (`header=None`).
+- `.iloc[4:12, 1:6]`: Inilah rahasianya. Fitur ini menyeleksi sebuah "kotak" (seperti proses *drag* kursor) secara eksak yang dimulai dari Baris indeks ke-4 sampai 11, dan Kolom indeks ke-1 sampai 5. Data di luar koordinat tersebut diabaikan.
+- `.insert(0, 'id_kamar'...)`: Menyisipkan kolom `Primary Key` secara massal (mulai angka 1, 2, 3...) langsung di awal tabel sebelum didorong ke database.
+
+#### Bagian 4: Eksekusi Insert Multi-Data
+```python
+    def insert_df_to_mysql(data_df, table_name):
+        data_df = data_df.where(pd.notnull(data_df), None) 
+        cols = ", ".join([str(i) for i in data_df.columns.tolist()])
+        placeholders = ", ".join(["%s"] * len(data_df.columns))
+        sql = f"INSERT INTO {table_name} ({cols}) VALUES ({placeholders})"
+        
+        data_tuples = [tuple(x) for x in data_df.to_numpy()]
+        cursor.executemany(sql, data_tuples)
+        mysql_conn.commit()
+```
+**Penjelasan:**
+- `.where(pd.notnull)`: Jika excel punya kotak yang kosong, Pandas mengubahnya jadi *NaN* (Not a Number). Modifikasi ini mengubah *NaN* menjadi nilai asli `None` (NULL di SQL).
+- `executemany`: Alih-alih melakukan *query insert* satu per satu yang sangat lambat, fitur ini menembakkan keseluruhan ribuan baris Excel (Array Tuples) sekaligus dalam 1 milidetik. 
+
+#### Bagian 5: Mengupas Data JSON MongoDB
+```python
+    mongo_db = get_mongo_connection()
+    collection = mongo_db['reviews']
+    collection.drop()
+    
+    with open('review_seed.JSON', 'r', encoding='utf-8') as file:
+        content = file.read().strip()
+        
+    if content.startswith('db.reviews.insertMany('):
+        content = content.replace('db.reviews.insertMany(', '')
+        if content.endswith(')'):
+            content = content[:-1]
+            
+    reviews_data = json.loads(content)
+    collection.insert_many(reviews_data)
+```
+**Penjelasan:**
+- Karena file `review_seed.JSON` Anda aslinya berisi sebuah sintaks fungsi *MongoDB Shell*, ia ditolak oleh parser JSON Python.
+- Oleh karena itu, skrip Python ini mengidentifikasi jika ada awalan `db.reviews.insertMany(`. Kalau iya, maka teks kata awalan itu dan tanda kurung penutupnya di bagian akhir akan dihancurkan (`.replace`). Hasilnya, tersisa murni data *JSON Array* yang dapat dicerna utuh ke MongoDB dengan `insert_many`.
 
 ---
 
-### 4. `controllers/mysql_controller.py` (Logika SQL Kompleks)
-Sesuai arsitektur, semua sintaks SQL berada terpusat di modul ini.
+### 4. File: `controllers/mysql_controller.py` (SQL Logic)
 
+#### Bagian 1: Cek Kamar Kosong (Menu 1)
 ```python
 from config.database import run_query_mysql
 
 def menu_cek_kamar_kosong():
-    """Menu 1: Cek Kamar Kosong (MySQL)"""
     query = "SELECT nomor_kamar, tipe_kamar, harga_sewa, fasilitas FROM Kamar WHERE status_kamar = 'Tersedia'"
     data = run_query_mysql(query)
-    # Output rendering...
+    
+    for row in data:
+        print(f"Kamar: {row['nomor_kamar']} | Tipe: {row['tipe_kamar']}")
+```
+**Penjelasan:** 
+- Operasi SELECT paling dasar. Memfilter dari 1 tabel dengan parameter kaku `WHERE status_kamar = 'Tersedia'`.
 
+#### Bagian 2: Cek Kontrak Hampir Habis (Menu 2)
+```python
 def menu_cek_kontrak_hampir_habis():
-    """Menu 2: Cek Kontrak Hampir Habis (MySQL)"""
     query = """
         SELECT p.nama_penghuni, k.nomor_kamar, ko.tanggal_selesai, DATEDIFF(ko.tanggal_selesai, CURDATE()) as sisa_hari
         FROM Kontrak ko
@@ -278,22 +272,23 @@ def menu_cek_kontrak_hampir_habis():
         JOIN Kamar k ON ko.id_kamar = k.id_kamar
         WHERE DATEDIFF(ko.tanggal_selesai, CURDATE()) BETWEEN -30 AND 90
           AND ko.status_kontrak = 'Aktif'
-        ORDER BY ko.tanggal_selesai ASC
     """
     data = run_query_mysql(query)
     # Output rendering...
+```
+**Penjelasan:** 
+- `JOIN`: Menyambungkan 3 tabel (Kontrak, Penghuni, Kamar) karena data yang dicari terpecah.
+- `DATEDIFF(ko.tanggal_selesai, CURDATE())`: Rumus canggih SQL! Secara dinamis menghitung selisih jarak hari dari *tanggal selesai kontrak* terhadap *tanggal sistem hari ini*. 
+- `BETWEEN -30 AND 90`: Memfilter hanya kontrak yang telat 30 hari hingga yang akan habis 3 bulan ke depan.
 
+#### Bagian 3: Rekap Tagihan & Denda (Menu 3 - Complex JOIN)
+```python
 def menu_rekap_tagihan_denda():
-    """Menu 3: Rekap Tagihan & Denda (MySQL Complex JOIN)"""
     query = """
         SELECT 
-            p.nama_penghuni, 
-            k.nomor_kamar, 
-            pb.bulan_tagihan,
-            pb.jumlah_bayar AS tagihan_pokok,
+            p.nama_penghuni, k.nomor_kamar, pb.jumlah_bayar,
             IFNULL(d.jumlah_denda, 0) AS total_denda,
-            (pb.jumlah_bayar + IFNULL(d.jumlah_denda, 0)) AS total_harus_dibayar,
-            pb.status_bayar
+            (pb.jumlah_bayar + IFNULL(d.jumlah_denda, 0)) AS total_harus_dibayar
         FROM Penghuni p
         JOIN Kontrak ko ON p.id_penghuni = ko.id_penghuni
         JOIN Kamar k ON ko.id_kamar = k.id_kamar
@@ -303,27 +298,23 @@ def menu_rekap_tagihan_denda():
     data = run_query_mysql(query)
     # Output rendering...
 ```
-**Penjelasan Kode:**
-- `WHERE status_kamar = 'Tersedia'`: Filstrasi dasar satu tabel.
-- `DATEDIFF(ko.tanggal_selesai, CURDATE())`: Fitur cerdas MySQL. Kurangi tanggal kontrak selesai dengan tanggal server hari ini (`CURDATE()`). Hasil outputnya berupa angka (jumlah hari).
-- `BETWEEN -30 AND 90`: Nilai minus menandakan telat 30 hari. 90 menandakan tenggat 3 bulan.
-- **Complex JOIN (Menu 3)**: Menggabungkan 5 tabel secara paralel (menggunakan *Primary ID* sebagai relasi).
-- **`LEFT JOIN Denda`**: Denda adalah satu-satunya tabel yang wajib dihubungkan lewat "kiri" (LEFT). Kenapa? Karena data pembayaran normal (tanpa denda) tidak terdaftar di dalam tabel Denda. Jika Anda memakai *INNER JOIN*, pembayaran lunas tanpa denda tidak akan terbaca dan dilaporkan oleh sistem!
-- **`IFNULL(jumlah_denda, 0)`**: Kalau denda kosong (NULL), MySQL ganti ke angka 0. Sangat vital untuk persamaan matematika Total Bayar, karena di bahasa SQL manapun: `1 Juta + NULL = NULL (Error)`.
+**Penjelasan:** 
+- **Complex JOIN**: Proses penggabungan besar-besaran 5 buah tabel paralel.
+- **`LEFT JOIN Denda`**: Tabel Denda harus disambung lewat *KIRI* (LEFT). Alasannya, tidak semua data pembayaran masuk ke tabel denda (karena ada orang bayar tepat waktu). Jika menggunakan *INNER JOIN*, orang yang teladan/lunas tanpa denda *tidak akan muncul sama sekali* di hasil laporannya!
+- **`IFNULL(jumlah_denda, 0)`**: Kalau hasil *LEFT JOIN* tidak menemukan denda, nilainya akan berisi *NULL*. Jika angka *Jumlah Bayar* ditambah *NULL*, hasilnya akan *ERROR* secara matematika SQL. Oleh karena itu, `IFNULL` menyulap nilai NULL tersebut menjadi angka 0 agar persamaan matematikanya aman.
 
 ---
 
-### 5. `controllers/mongo_controller.py` (Pencarian NoSQL)
-Memanfaatkan fitur canggih dari MongoDB (Regex, Query Terstruktur).
+### 5. File: `controllers/mongo_controller.py` (NoSQL Logic)
 
+#### Pencarian Canggih MongoDB (Menu 4)
 ```python
 import re
 from config.database import get_mongo_connection
 
 def menu_cari_review_mongodb():
-    """Menu 4: Cari Review MongoDB"""
     kata_kunci = input("Masukkan keyword tag: ")
-    rating_input = input("Masukkan minimal rating (1-5): ")
+    rating_input = input("Masukkan minimal rating: ")
     
     mongo_db = get_mongo_connection()
     collection = mongo_db['reviews']
@@ -337,30 +328,23 @@ def menu_cari_review_mongodb():
         query['rating'] = {"$gte": int(rating_input)}
         
     hasil_pencarian = collection.find(query)
-    
-    for review in hasil_pencarian:
-        bintang = "★" * int(review.get('rating', 0))
-        tags_str = ", ".join(review.get('tags', []))
-        # Print ...
 ```
-**Penjelasan Kode:**
-- `query = {}`: Inisialisasi awal. Jika parameter input user dibiarkan kosong, MongoDB akan mencari seluruh tabel (karena `find({})` itu setara dengan `SELECT *`).
-- `re.compile(..., re.IGNORECASE)`: Mengaktifkan mode *Regular Expression* pada Python yang anti huruf kapital. Pencarian kata "Kotor" tetap akan mengenai tag "kotor".
-- `{"$in": [...]}`: Operator MongoDB In Array. Memerintahkan sistem untuk mencari adakah satu saja *array* tag yang mengandung pola di atas.
-- `{"$gte": ...}`: Operator *Greater Than or Equal*. Mencari dokumen yang kolom rating-nya lebih besar dari atau setidaknya sama dengan batasan (*limit*) dari user.
-- `bintang = "★" * ...`: Trik Python. Mengalikan simbol string sesuai dengan jumlah rating integer dari database (contoh: string bintang dikali 4, menghasilkan 4 jejer bintang).
+**Penjelasan:**
+- Logika NoSQL lebih dinamis (Object/Dictionary) dibandingkan String kaku di MySQL. Dictionary `query = {}` bisa membesar secara elastis.
+- `re.compile(..., re.IGNORECASE)`: Mengubah kata kunci menjadi format Regex, agar pencarian anti sensitif terhadap huruf kapital (KOTOR = kotor).
+- `{"$in": [...]}`: Perintah "In-Array" spesifik MongoDB. Memerintahkan server memeriksa apakah *keyword* user bersarang di dalam serpihan *List of Tags*.
+- `{"$gte": ...}`: *Greater Than or Equal*. Mencari otomatis semua rating yang setidaknya sama persis atau lebih besar (contoh: minta rating minimal 3, maka rating 4 dan 5 otomatis tampil).
 
 ---
 
-### 6. `controllers/chart_controller.py` (Visualisasi Plotext CLI)
-Modul untuk merender Bar Chart layaknya aplikasi GUI sungguhan di dalam terminal.
+### 6. File: `controllers/chart_controller.py` (Visualisasi Data)
 
+#### Bagian 1: Chart SQL Dasar (Menu 5)
 ```python
 import plotext as plt
 from config.database import run_query_mysql, get_mongo_connection
 
 def menu_grafik_status_kamar():
-    """Menu 5: Grafik Status Kamar (Plotext & MySQL)"""
     query = "SELECT status_kamar, COUNT(*) as jumlah FROM Kamar GROUP BY status_kamar"
     data = run_query_mysql(query)
     
@@ -372,12 +356,16 @@ def menu_grafik_status_kamar():
         
     plt.clear_data()
     plt.bar(labels, values, color="cyan", marker="sd")
-    plt.title("Grafik Jumlah Kamar Berdasarkan Status (MySQL)")
-    plt.theme("dark")
     plt.show()
+```
+**Penjelasan:**
+- `GROUP BY`: Memilah total baris berdasarkan isian kolom 'Tersedia' vs 'Terisi'. `COUNT(*)` menotal masing-masing.
+- Terjadi *Data Formatting*. Output Dictionary SQL itu pecah menjadi 2 array: `labels` (untuk Sumbu X) dan `values` (Sumbu Y).
+- `plt.clear_data()`: Mengosongkan memori kanvas visualisasi, agar ketika menu ditekan berkali-kali, gambarnya tidak bertumpuk/menduplikat diri. `plt.bar` mengeksekusi konversi ke gambar batang (Bar Chart) di terminal CLI.
 
+#### Bagian 2: Chart Agregasi MongoDB (Menu 6)
+```python
 def menu_grafik_distribusi_rating():
-    """Menu 6: Grafik Distribusi Rating (Plotext & MongoDB)"""
     mongo_db = get_mongo_connection()
     collection = mongo_db['reviews']
     
@@ -387,23 +375,10 @@ def menu_grafik_distribusi_rating():
     ]
     hasil = list(collection.aggregate(pipeline))
     
-    labels = []
-    values = []
-    for doc in hasil:
-        labels.append(f"Bintang {doc['_id']}")
-        values.append(doc['jumlah'])
-        
-    plt.clear_data()
-    plt.bar(labels, values, color="green", marker="sd")
-    plt.title("Grafik Distribusi Rating Penghuni (MongoDB)")
-    plt.theme("dark")
-    plt.show()
+    # ... render ke plotext sama seperti di atas
 ```
-**Penjelasan Kode:**
-- `GROUP BY status_kamar`: Aggregasi klasik di MySQL. Kolom yang tadinya puluhan diubah menjadi grup yang sama, lalu dihitungkan total kemunculannya lewat `COUNT(*)`.
-- `pipeline = [...]` & `.aggregate(...)`: **Fitur Pipeline Aggregation di MongoDB**. Fitur ini jauh lebih kuat daripada Query SQL. Beroperasi seperti jalur pipa:
-  - Pipa Pertama (`$group`): Satukan semua *review* yang memiliki rating yang sama, lalu buat variabel "jumlah" yang terus di-*increment* (`$sum: 1`).
-  - Pipa Kedua (`$sort`): Lanjutkan data yang sudah dikelompokkan tersebut, lalu urutkan nilainya dari rating terkecil ke terbesar (`1` berarti *ascending*).
-- `.append(...)`: Logika pemecahan *dictionary JSON/SQL* menjadi dua Array dasar secara terpisah (Array Sumbu X/Label, dan Array Sumbu Y/Value).
-- `plt.clear_data()`: **Penting!** Mencegah grafik sebelumnya menumpuk jika fungsi ini dipanggil dua kali tanpa keluar program.
-- `plt.bar(...)`: Merender kumpulan array di atas menjadi pilar/batang (*bar chart*) ke dalam layar terminal.
+**Penjelasan:**
+- Berbeda dengan `find()`, MongoDB memiliki teknologi super mutakhir bernama **Aggregation Pipeline**.
+- Bekerja bagai ban berjalan di pabrik:
+  - **Tahap Pipa 1 (`$group`)**: Mengumpulkan dokumen yang memiliki Primary ID (`_id`) / Nilai `$rating` yang persis sama. Kemudian, ia akan menekan tuas konter (`$sum: 1`) setiap kali ada dokumen yang masuk ke grup tersebut.
+  - **Tahap Pipa 2 (`$sort`)**: Setelah nilai dijumlahkan, data diputar dan diurutkan menaik (*Ascending* angka 1). Artinya, Bintang 1 akan ditaruh di awal antrian, dan Bintang 5 di akhir antrian. Selanjutnya hasil disuapkan langsung ke library plotext.
