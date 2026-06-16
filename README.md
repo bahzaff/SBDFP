@@ -16,11 +16,10 @@ Proyek ini mengadaptasi arsitektur **MVC (Model-View-Controller)** sederhana yan
 ---
 
 ## 🚀 Cara Penggunaan (Step-by-Step)
-1. Buka terminal di folder proyek ini dan ketik: `pip install -r requirements.txt`
-2. Gandakan `env.example` menjadi `.env` lalu isikan kredensial database Anda.
-3. Pastikan MySQL dan MongoDB berjalan di laptop Anda.
-4. Ketik `python main.py`
-5. Tekan angka **`0`** lalu `Enter` untuk inisialisasi database awal.
+1. **Instalasi**: Buka terminal di folder proyek ini dan ketik: `pip install -r requirements.txt`
+2. **Nyalakan Server**: Buka aplikasi **XAMPP Control Panel**, lalu nyalakan (*Start*) modul **MySQL**. Pastikan juga server **MongoDB** berjalan di laptop Anda.
+3. **Jalankan Aplikasi**: Ketik `python main.py`
+4. **Seeding (Wajib Pertama Kali)**: Di Menu Utama, tekan angka **`0`** lalu `Enter` untuk membuat dan menyuntikkan data dari `dataset_koskufp.xlsx` & `review_seed.JSON` ke database komputer Anda.
 
 ---
 
@@ -305,7 +304,41 @@ def menu_rekap_tagihan_denda():
 
 ---
 
-### 5. File: `controllers/mongo_controller.py` (NoSQL Logic)
+### 5. File: `controllers/crud_controller.py` (Menu 7 - Kelola Data Penghuni)
+Menu interaktif tambahan untuk membuktikan operasi manipulasi data secara utuh menggunakan *Raw SQL* murni.
+
+#### Bagian 1: Insert (Tambah Penghuni)
+```python
+def _create_penghuni():
+    # input(...) variabel
+    query = """
+        INSERT INTO Penghuni (id_penghuni, nama_penghuni, jenis_kelamin, no_hp, email, alamat_asal)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    params = (id_penghuni, nama, jk, no_hp, email, alamat)
+    run_query_mysql(query, params, fetch=False)
+```
+**Penjelasan:** Menggunakan injeksi string tuple `(%s)` yang terhindar dari lubang keamanan *SQL Injection*. Parameter `fetch=False` penting karena perintah `INSERT` tidak mengembalikan bentuk *tabel* dari MySQL.
+
+#### Bagian 2: Update (Ubah Data) & Delete (Hapus)
+```python
+def _update_penghuni():
+    # ...
+    query = "UPDATE Penghuni SET nama_penghuni = %s, no_hp = %s WHERE id_penghuni = %s"
+    run_query_mysql(query, (nama_baru, hp_baru, id_penghuni), fetch=False)
+
+def _delete_penghuni():
+    # ...
+    query = "DELETE FROM Penghuni WHERE id_penghuni = %s"
+    run_query_mysql(query, (id_penghuni,), fetch=False)
+```
+**Penjelasan:** 
+- `UPDATE ... SET`: Mengubah data kolom spesifik berdasarkan ID.
+- `DELETE FROM`: Menghapus satu baris penuh dari tabel Penghuni. **Catatan:** Sesuai aturan *Relational Database*, eksekusi `DELETE` ini akan otomatis ditolak/error oleh sistem jika penghuni tersebut masih memiliki record di tabel "Kontrak", sehingga data pembayaran yang sedang berjalan tidak akan pernah rusak.
+
+---
+
+### 6. File: `controllers/mongo_controller.py` (Pencarian NoSQL)
 
 #### Pencarian Canggih MongoDB (Menu 4)
 ```python
