@@ -1,0 +1,6 @@
+id_pembayaran,jumlah_denda,alasan,status_denda
+3,50000,Terlambat 5 hari,Sudah Dibayar
+6,25000,Terlambat 1 hari,Sudah Dibayar
+11,50000,Terlambat 5 hari,Belum Dibayar
+4,75000,Belum membayar melewati jatuh tempo,Belum Dibayar
+7,75000,Belum membayar melewati jatuh tempo,Belum Dibayar

@@ -19,7 +19,7 @@ Proyek ini mengadaptasi arsitektur **MVC (Model-View-Controller)** sederhana yan
 1. **Instalasi**: Buka terminal di folder proyek ini dan ketik: `pip install -r requirements.txt`
 2. **Nyalakan Server**: Buka aplikasi **XAMPP Control Panel**, lalu nyalakan (*Start*) modul **MySQL**. Pastikan juga server **MongoDB** berjalan di laptop Anda.
 3. **Jalankan Aplikasi**: Ketik `python main.py`
-4. **Seeding (Wajib Pertama Kali)**: Di Menu Utama, tekan angka **`0`** lalu `Enter` untuk membuat dan menyuntikkan data dari `dataset_koskufp.xlsx` & `review_seed.JSON` ke database komputer Anda.
+4. **Seeding (Wajib Pertama Kali)**: Di Menu Utama, tekan angka **`0`** lalu `Enter` untuk membuat dan menyuntikkan data dari **6 File CSV** & `review_seed.JSON` ke database komputer Anda.
 
 ---
 
@@ -36,10 +36,11 @@ from controllers.setup_controller import setup_database
 from controllers.mysql_controller import menu_cek_kamar_kosong, menu_cek_kontrak_hampir_habis, menu_rekap_tagihan_denda
 from controllers.mongo_controller import menu_cari_review_mongodb
 from controllers.chart_controller import menu_grafik_status_kamar, menu_grafik_distribusi_rating
+from controllers.crud_controller import menu_crud_penghuni
 ```
 **Penjelasan:** 
 - `import sys`: Digunakan khusus untuk mengeksekusi perintah mematikan program secara total (`sys.exit`).
-- `from controllers...`: Memanggil seluruh fungsi operasional yang sudah disebar ke sub-folder `controllers/` agar file utama ini tetap bersih.
+- `from controllers...`: Memanggil seluruh fungsi operasional yang sudah disebar ke sub-folder `controllers/` agar file utama ini tetap bersih, termasuk fungsi CRUD tambahan.
 
 #### Bagian 2: Fungsi Main (Antarmuka CLI)
 ```python
@@ -49,12 +50,12 @@ def main():
         print("           SISTEM MANAJEMEN KOS (KOSKU)           ")
         print("="*50)
         print("0. Setup & Inisialisasi Database (Jalankan Awal)  ")
-        # ... (Print Pilihan 1 sampai 7)
+        # ... (Print Pilihan 1 sampai 8)
         
-        pilihan = input("Pilih menu navigasi (0-7): ")
+        pilihan = input("Pilih menu navigasi (0-8): ")
 ```
 **Penjelasan:** 
-- `while True:`: Konstruksi perulangan abadi. Ini memastikan bahwa setelah pengguna menjalankan suatu fitur (misal: Cek Kamar Kosong), program tidak langsung tertutup, melainkan akan kembali mencetak Menu Utama berulang kali sampai user sengaja memilih menu nomor 7 (Keluar).
+- `while True:`: Konstruksi perulangan abadi. Ini memastikan bahwa setelah pengguna menjalankan suatu fitur (misal: Cek Kamar Kosong), program tidak langsung tertutup, melainkan akan kembali mencetak Menu Utama berulang kali sampai user sengaja memilih menu nomor 8 (Keluar).
 - `input(...)`: Meminta masukan teks dari pengguna dan menyimpannya di variabel `pilihan`.
 
 #### Bagian 3: Router Menu & Exit
@@ -65,6 +66,8 @@ def main():
             menu_cek_kamar_kosong()
         # ... (elif 2 sampai 6)
         elif pilihan == '7':
+            menu_crud_penghuni()
+        elif pilihan == '8':
             print("Sistem ditutup. Terima kasih!")
             sys.exit(0)
         else:
@@ -155,9 +158,8 @@ def get_mongo_connection():
 
 ---
 
-### 3. File: `controllers/setup_controller.py` (Seeding / Import)
-
-#### Bagian 1: Inisiasi Database & Tabel Baru (Drop)
+### 3. `controllers/setup_controller.py` (Seeding / Impor Data Asli)
+Membaca **6 File CSV** (Kamar, Penghuni, Kontrak, dll) & `review_seed.JSON`, membuat skema tabel, dan menginput datanya.(Drop)
 ```python
 # ... import pandas, json, dll
 def setup_database():
@@ -173,6 +175,7 @@ def setup_database():
 ```
 **Penjelasan:**
 - `CREATE DATABASE`: Murni DDL (Data Definition Language) untuk membangun skema.
+- **Sangat Aman Diulang**: Fungsi ini dirancang agar Anda bisa menekan Menu 0 berulang kali tanpa merusak data (*Duplicate Data*). MySQL akan menghapus (`DROP`) semua tabel jika sudah ada.
 - `DROP TABLE` Terbalik: Urutan nama array dimulai dari 'Notifikasi' mundur hingga ke 'Kamar'. Mengapa? Karena aturan ketat **Foreign Key Constraint** MySQL; Tabel "Anak" yang menumpang pada tabel "Induk" harus dihapus terlebih dahulu, jika tidak MySQL akan menolaknya.
 
 #### Bagian 2: Pembuatan DDL (Tabel MySQL)
@@ -192,24 +195,22 @@ def setup_database():
 **Penjelasan:**
 - Membentuk kerangka masing-masing tabel. Harga sewa didefinisikan sebagai `DECIMAL` untuk menyimpan nominal uang yang sangat akurat tanpa pembulatan *float*.
 
-#### Bagian 3: Membaca & Memotong Koordinat Excel
+#### Bagian 3: Membaca File CSV
 ```python
-    df = pd.read_excel('dataset_koskufp.xlsx', header=None)
+    print("[MySQL] Membaca dan mem-parsing data dari file CSV...")
     
-    kamar_df = df.iloc[4:12, 1:6].copy()
-    kamar_df.columns = ['nomor_kamar', 'tipe_kamar', 'harga_sewa', 'status_kamar', 'fasilitas']
+    kamar_df = pd.read_csv('data/kamar.csv')
     kamar_df.insert(0, 'id_kamar', range(1, len(kamar_df) + 1))
     # (Kode serupa dilakukan untuk Penghuni, Kontrak, dst)
 ```
 **Penjelasan:**
-- Dikarenakan file *dataset_koskufp.xlsx* Anda menyatukan banyak tabel di sembarang tempat pada sheet yang sama, maka `pandas` diinstruksikan tidak membaca *Header* (`header=None`).
-- `.iloc[4:12, 1:6]`: Inilah rahasianya. Fitur ini menyeleksi sebuah "kotak" (seperti proses *drag* kursor) secara eksak yang dimulai dari Baris indeks ke-4 sampai 11, dan Kolom indeks ke-1 sampai 5. Data di luar koordinat tersebut diabaikan.
-- `.insert(0, 'id_kamar'...)`: Menyisipkan kolom `Primary Key` secara massal (mulai angka 1, 2, 3...) langsung di awal tabel sebelum didorong ke database.
+- Dikarenakan membaca file `.xlsx` yang berantakan sangat berisiko, kita menggunakan file `.csv` terpisah yang lebih bersih dan standar untuk manipulasi database.
+- `.insert(0, 'id_kamar'...)`: Menyisipkan kolom `Primary Key` secara massal (mulai angka 1, 2, 3...) langsung di awal tabel sebelum didorong ke database MySQL.
 
 #### Bagian 4: Eksekusi Insert Multi-Data
 ```python
     def insert_df_to_mysql(data_df, table_name):
-        data_df = data_df.where(pd.notnull(data_df), None) 
+        data_df = data_df.astype(object).where(pd.notnull(data_df), None) # Ubah NaN ke None
         cols = ", ".join([str(i) for i in data_df.columns.tolist()])
         placeholders = ", ".join(["%s"] * len(data_df.columns))
         sql = f"INSERT INTO {table_name} ({cols}) VALUES ({placeholders})"

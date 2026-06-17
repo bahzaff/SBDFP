@@ -1,0 +1,10 @@
+id_penghuni,jenis_notifikasi,tanggal_notifikasi,status_baca
+1,Pengingat Pembayaran,2026-02-08 00:00:00,Sudah Dibaca
+2,Tagihan Belum Dibayar,2026-03-11 00:00:00,Belum Dibaca
+3,Kontrak Akan Berakhir,2026-12-20 00:00:00,Belum Dibaca
+4,Tagihan Belum Dibayar,2026-05-11 00:00:00,Sudah Dibaca
+5,Pembayaran Berhasil,2026-06-09 00:00:00,Sudah Dibaca
+6,Tagihan Belum Dibayar,2026-07-11 00:00:00,Belum Dibaca
+7,Kontrak Berakhir,2025-12-31 00:00:00,Sudah Dibaca
+8,Pembayaran Berhasil,2025-03-08 00:00:00,Sudah Dibaca
+9,Kontrak Akan Berakhir,2026-02-20 00:00:00,Belum Dibaca

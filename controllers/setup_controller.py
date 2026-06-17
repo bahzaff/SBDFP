@@ -89,36 +89,29 @@ def setup_database():
                 )
             """)
             
-            # Ekstraksi manual dari data excel_koskufp.xlsx (posisi ter-hardcode)
-            print("[MySQL] Membaca dan mem-parsing dataset_koskufp.xlsx...")
-            df = pd.read_excel('dataset_koskufp.xlsx', header=None)
+            # Membaca data secara modular dari file CSV masing-masing di folder data/
+            print("[MySQL] Membaca dan mem-parsing data dari file CSV...")
             
-            kamar_df = df.iloc[4:12, 1:6].copy()
-            kamar_df.columns = ['nomor_kamar', 'tipe_kamar', 'harga_sewa', 'status_kamar', 'fasilitas']
+            kamar_df = pd.read_csv('data/kamar.csv')
             kamar_df.insert(0, 'id_kamar', range(1, len(kamar_df) + 1))
             
-            penghuni_df = df.iloc[15:25, 1:6].copy()
-            penghuni_df.columns = ['nama_penghuni', 'jenis_kelamin', 'no_hp', 'email', 'alamat_asal']
+            penghuni_df = pd.read_csv('data/penghuni.csv')
             penghuni_df.insert(0, 'id_penghuni', range(1, len(penghuni_df) + 1))
             
-            kontrak_df = df.iloc[28:38, 1:6].copy()
-            kontrak_df.columns = ['id_penghuni', 'id_kamar', 'tanggal_mulai', 'tanggal_selesai', 'status_kontrak']
+            kontrak_df = pd.read_csv('data/kontrak.csv')
             kontrak_df.insert(0, 'id_kontrak', range(1, len(kontrak_df) + 1))
             
-            pembayaran_df = df.iloc[12:32, 7:13].copy()
-            pembayaran_df.columns = ['id_kontrak', 'bulan_tagihan', 'tanggal_jatuh_tempo', 'tanggal_bayar', 'jumlah_bayar', 'status_bayar']
+            pembayaran_df = pd.read_csv('data/pembayaran.csv')
             pembayaran_df.insert(0, 'id_pembayaran', range(1, len(pembayaran_df) + 1))
             
-            denda_df = df.iloc[4:9, 7:11].copy()
-            denda_df.columns = ['id_pembayaran', 'jumlah_denda', 'alasan', 'status_denda']
+            denda_df = pd.read_csv('data/denda.csv')
             denda_df.insert(0, 'id_denda', range(1, len(denda_df) + 1))
             
-            notif_df = df.iloc[35:45, 7:11].copy()
-            notif_df.columns = ['id_penghuni', 'jenis_notifikasi', 'tanggal_notifikasi', 'status_baca']
+            notif_df = pd.read_csv('data/notifikasi.csv')
             notif_df.insert(0, 'id_notifikasi', range(1, len(notif_df) + 1))
             
             def insert_df_to_mysql(data_df, table_name):
-                data_df = data_df.where(pd.notnull(data_df), None) # Ubah NaN ke None/NULL
+                data_df = data_df.astype(object).where(pd.notnull(data_df), None) # Ubah NaN ke None/NULL secara aman
                 cols = ", ".join([str(i) for i in data_df.columns.tolist()])
                 placeholders = ", ".join(["%s"] * len(data_df.columns))
                 sql = f"INSERT INTO {table_name} ({cols}) VALUES ({placeholders})"
@@ -137,8 +130,8 @@ def setup_database():
             
             cursor.close()
             print("[MySQL] Setup selesai dan berhasil.\n")
-        except FileNotFoundError:
-            print("[Error] File dataset_koskufp.xlsx tidak ditemukan di folder root!")
+        except FileNotFoundError as e:
+            print(f"[Error] File CSV tidak ditemukan: {e}")
         except Exception as e:
             print(f"[Error] Gagal saat setup MySQL: {e}")
         finally:
@@ -151,11 +144,11 @@ def setup_database():
     mongo_db = get_mongo_connection()
     if mongo_db is not None:
         try:
-            print("[MongoDB] Membaca file review_seed.JSON...")
+            print("[MongoDB] Membaca file data/review_seed.JSON...")
             collection = mongo_db['reviews']
             collection.drop()
             
-            with open('review_seed.JSON', 'r', encoding='utf-8') as file:
+            with open('data/review_seed.JSON', 'r', encoding='utf-8') as file:
                 content = file.read().strip()
                 
             # Pembersih jika isinya query insertMany MongoDB Shell

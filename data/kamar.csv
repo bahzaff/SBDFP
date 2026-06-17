@@ -1,0 +1,11 @@
+nomor_kamar,tipe_kamar,harga_sewa,status_kamar,fasilitas
+A01,Standard,750000,Terisi,"Kasur, Lemari"
+A02,Standard,750000,Tersedia,"Kasur, Lemari"
+A03,Standard,750000,Terisi,"Kasur, Lemari"
+B01,Deluxe,1000000,Terisi,"Kasur, Lemari, AC"
+B02,Deluxe,1000000,Tersedia,"Kasur, Lemari, AC"
+B03,Deluxe,1000000,Terisi,"Kasur, Lemari, AC"
+C01,Premium,1250000,Terisi,"Kasur, Lemari, AC, TV"
+C02,Premium,1250000,Maintenance,"Kasur, Lemari, AC, TV"
+C03,Premium,1250000,Terisi,"Kasur, Lemari, AC, TV"
+C04,Premium,1250000,Tersedia,"Kasur, Lemari, AC, TV"
