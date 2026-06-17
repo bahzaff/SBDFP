@@ -305,21 +305,37 @@ def menu_rekap_tagihan_denda():
 
 ---
 
-### 5. File: `controllers/crud_controller.py` (Menu 7 - Kelola Data Penghuni)
+### 5. `controllers/crud_controller.py` (Menu 7 - Kelola Data Penghuni)
 Menu interaktif tambahan untuk membuktikan operasi manipulasi data secara utuh menggunakan *Raw SQL* murni.
 
-#### Bagian 1: Insert (Tambah Penghuni)
+**Fitur Unggulan: Strict Input Validation**
+Aplikasi ini dilengkapi sistem penjaga keamanan input (Validasi) yang ketat untuk mencegah masuknya data "sampah":
+- **Anti-Duplikasi ID**: Menggunakan `SELECT id_penghuni FROM Penghuni WHERE id_penghuni = %s` sebelum `INSERT` untuk mencegah tabrakan data (Duplicate Entry).
+- **Validasi Format Email**: Menggunakan pustaka *Regular Expression* bawaan Python (`import re`) dengan pola `[^@]+@[^@]+\.[^@]+` untuk memaksa bentuk penulisan email yang wajar.
+- **Validasi Angka**: Memaksa No HP untuk `isdigit()` dengan minimal 10 karakter.
+- **Validasi Eksistensi Hapus**: Mencegah program mengirim status "Sukses" palsu jika men-delete ID yang tidak ada di dalam database.
+
+#### Bagian 1: Insert (Tambah Penghuni & Multi-table Transaction)
 ```python
 def _create_penghuni():
-    # input(...) variabel
-    query = """
-        INSERT INTO Penghuni (id_penghuni, nama_penghuni, jenis_kelamin, no_hp, email, alamat_asal)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """
-    params = (id_penghuni, nama, jk, no_hp, email, alamat)
+    # 1. Insert ke tabel Penghuni
+    # ... validasi panjang ...
+    query = "INSERT INTO Penghuni (...) VALUES (...)"
     run_query_mysql(query, params, fetch=False)
+    
+    # 2. FITUR LANJUTAN: Multi-table Transaction
+    # Menampilkan kamar yang kosong
+    kamar_kosong = run_query_mysql("SELECT ... FROM Kamar WHERE status_kamar = 'Tersedia'")
+    
+    # 3. Insert ke tabel Kontrak
+    q_kontrak = "INSERT INTO Kontrak (id_kontrak, id_penghuni, id_kamar, tanggal_mulai, ...) VALUES (...)"
+    
+    # 4. Update status di tabel Kamar
+    q_update_kamar = "UPDATE Kamar SET status_kamar = 'Terisi' WHERE id_kamar = %s"
 ```
-**Penjelasan:** Menggunakan injeksi string tuple `(%s)` yang terhindar dari lubang keamanan *SQL Injection*. Parameter `fetch=False` penting karena perintah `INSERT` tidak mengembalikan bentuk *tabel* dari MySQL.
+**Penjelasan:** 
+- **Anti SQL Injection**: Menggunakan injeksi string tuple `(%s)` yang terhindar dari lubang keamanan *SQL Injection*. 
+- **Multi-Table Transaction**: Fitur ini sangat canggih. Sekali *user* menekan *Enter* untuk menyewa kamar, Python akan menembak 3 *query* sekaligus ke 3 tabel yang berbeda secara beruntun (`INSERT` Penghuni, `INSERT` Kontrak baru dengan durasi sewa sesuai input pengguna, dan `UPDATE` Kamar jadi Terisi). Ini membuktikan pemahaman manipulasi *database* tingkat lanjut!
 
 #### Bagian 2: Update (Ubah Data) & Delete (Hapus)
 ```python

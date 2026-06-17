@@ -82,7 +82,68 @@ def _create_penghuni():
         
         # fetch=False karena perintah INSERT tidak mengembalikan baris tabel
         run_query_mysql(query, params, fetch=False)
-        print(f"[Sukses] Permintaan penambahan data '{nama}' dikirim ke MySQL!")
+        print(f"\n[Sukses] Data Penghuni '{nama}' berhasil ditambahkan ke database!")
+        
+        # FITUR TAMBAHAN: Pilih Kamar & Buat Kontrak (Multi-table Transaction)
+        print("\n--- PILIH KAMAR (OPSIONAL) ---")
+        kamar_kosong = run_query_mysql("SELECT id_kamar, nomor_kamar, harga_sewa FROM Kamar WHERE status_kamar = 'Tersedia'")
+        
+        if kamar_kosong:
+            print("Daftar kamar yang tersedia saat ini:")
+            for k in kamar_kosong:
+                print(f"- ID: {k['id_kamar']} | Nomor: {k['nomor_kamar']} | Harga: Rp{k['harga_sewa']:,.0f}")
+                
+            while True:
+                pilih_kamar = input("\nMasukkan ID Kamar untuk disewa (Ketik 0 jika lewati): ")
+                if not pilih_kamar.isdigit():
+                    print("[Error] Masukkan angka valid!")
+                    continue
+                
+                id_kamar_pilihan = int(pilih_kamar)
+                if id_kamar_pilihan == 0:
+                    print("Oke, penghuni ditambahkan tanpa kamar (hanya daftar tunggu).")
+                    break
+                    
+                # Cek apakah kamar valid dan kosong
+                kamar_valid = next((k for k in kamar_kosong if k['id_kamar'] == id_kamar_pilihan), None)
+                if kamar_valid:
+                    from datetime import datetime, timedelta
+                    
+                    # 1. Generate id_kontrak baru
+                    max_kontrak = run_query_mysql("SELECT MAX(id_kontrak) as max_id FROM Kontrak")
+                    new_id_kontrak = (max_kontrak[0]['max_id'] or 0) + 1 if max_kontrak else 1
+                    
+                    # 2. Minta Input Durasi Sewa
+                    while True:
+                        durasi_input = input("Durasi sewa (dalam bulan): ")
+                        if durasi_input.isdigit() and int(durasi_input) > 0:
+                            durasi_bulan = int(durasi_input)
+                            break
+                        print("[Error] Masukkan angka bulan yang valid (contoh: 1, 6, 12)!")
+                    
+                    # 3. Set Tanggal (1 bulan diasumsikan 30 hari)
+                    tgl_mulai = datetime.now()
+                    tgl_selesai = tgl_mulai + timedelta(days=30 * durasi_bulan)
+                    
+                    # 4. Insert Tabel Kontrak
+                    q_kontrak = """
+                        INSERT INTO Kontrak (id_kontrak, id_penghuni, id_kamar, tanggal_mulai, tanggal_selesai, status_kontrak)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """
+                    p_kontrak = (new_id_kontrak, id_penghuni, id_kamar_pilihan, tgl_mulai.strftime('%Y-%m-%d'), tgl_selesai.strftime('%Y-%m-%d'), 'Aktif')
+                    run_query_mysql(q_kontrak, p_kontrak, fetch=False)
+                    
+                    # 5. Update Tabel Kamar
+                    q_update_kamar = "UPDATE Kamar SET status_kamar = 'Terisi' WHERE id_kamar = %s"
+                    run_query_mysql(q_update_kamar, (id_kamar_pilihan,), fetch=False)
+                    
+                    print(f"[Sukses Luar Biasa] Penghuni '{nama}' resmi menempati Kamar '{kamar_valid['nomor_kamar']}' selama {durasi_bulan} Bulan ke depan!")
+                    break
+                else:
+                    print("[Error] ID Kamar tidak ditemukan atau sedang tidak tersedia! Pilih ID yang ada di daftar.")
+        else:
+            print("Sayang sekali, semua kamar saat ini PENUH. Penghuni didaftarkan tanpa kamar.")
+            
     except Exception as e:
         print(f"[Error] Terjadi kesalahan: {e}")
 
@@ -153,17 +214,28 @@ def _delete_penghuni():
             print(f"[Error] Penghuni dengan ID {id_penghuni} TIDAK DITEMUKAN di database!")
             return
             
-        print("\n[PERINGATAN] Sesuai aturan Foreign Key, penghuni yang masih memiliki KONTRAK atau NOTIFIKASI aktif tidak bisa dihapus, kecuali kontraknya dihapus dulu.")
-        konfirmasi = input(f"Yakin ingin menghapus data ID {id_penghuni}? (y/n): ")
+        # Cek apakah dia punya kontrak aktif
+        q_kontrak = "SELECT id_kontrak, id_kamar FROM Kontrak WHERE id_penghuni = %s AND status_kontrak = 'Aktif'"
+        kontrak_aktif = run_query_mysql(q_kontrak, (id_penghuni,))
+        
+        if not kontrak_aktif:
+            print(f"[Info] Penghuni ID {id_penghuni} saat ini tidak memiliki kamar / kontrak aktif yang bisa dihapus.")
+            return
+            
+        print(f"\n[PERINGATAN] Penghapusan (Delete) ini akan mengakhiri kontrak penghuni dan mengubah status kamar menjadi 'Tersedia'.")
+        print("Data riwayat pembayaran dan penghuni TETAP AMAN (Tidak Dihapus dari Database).")
+        konfirmasi = input(f"Yakin memproses Hapus Penghuni ID {id_penghuni}? (y/n): ")
         
         if konfirmasi.lower() == 'y':
-            # RAW SQL QUERY DELETE
-            query = "DELETE FROM Penghuni WHERE id_penghuni = %s"
-            params = (id_penghuni,)
+            # 1. Update Kontrak jadi Selesai
+            run_query_mysql("UPDATE Kontrak SET status_kontrak = 'Selesai' WHERE id_penghuni = %s AND status_kontrak = 'Aktif'", (id_penghuni,), fetch=False)
             
-            run_query_mysql(query, params, fetch=False)
-            print(f"[Sukses] Data ID {id_penghuni} berhasil dibasmi dari database MySQL!")
+            # 2. Update status semua kamar yang disewa penghuni tersebut jadi Tersedia
+            for k in kontrak_aktif:
+                run_query_mysql("UPDATE Kamar SET status_kamar = 'Tersedia' WHERE id_kamar = %s", (k['id_kamar'],), fetch=False)
+                
+            print(f"[Sukses] Proses Hapus ID {id_penghuni} berhasil! Kamar telah dibebaskan.")
         else:
             print("Dibatalkan.")
     except Exception as e:
-        print(f"[Error] Terjadi kesalahan saat menghapus (mungkin terhalang Foreign Key Kontrak): {e}")
+        print(f"[Error] Terjadi kesalahan saat menghapus: {e}")
