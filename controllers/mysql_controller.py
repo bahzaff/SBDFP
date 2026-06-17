@@ -64,3 +64,98 @@ def menu_rekap_tagihan_denda():
         print(f"   Total Denda   : Rp {row['total_denda']:,.2f}")
         print(f"   Total Bayar   : Rp {row['total_harus_dibayar']:,.2f}")
         print("-" * 60)
+
+from datetime import datetime
+
+def menu_kirim_notifikasi():
+    """Portal Pemilik: Mengirim Notifikasi ke Penghuni"""
+    print("\n--- KIRIM NOTIFIKASI KE PENGHUNI ---")
+    id_input = input("Masukkan ID Penghuni tujuan: ")
+    if not id_input.isdigit():
+        print("[Error] ID Penghuni harus berupa angka bulat!")
+        return
+    id_penghuni = int(id_input)
+    
+    # Validasi ID
+    cek = run_query_mysql("SELECT nama_penghuni FROM Penghuni WHERE id_penghuni = %s", (id_penghuni,))
+    if not cek:
+        print(f"[Error] Penghuni dengan ID {id_penghuni} tidak ditemukan!")
+        return
+        
+    nama_tujuan = cek[0]['nama_penghuni']
+    print(f"\nTujuan: {nama_tujuan}")
+    print("Pilih Jenis Notifikasi:")
+    print("1. Pengingat Pembayaran")
+    print("2. Tagihan Belum Dibayar")
+    print("3. Kontrak Akan Berakhir")
+    print("4. Kontrak Berakhir")
+    print("5. Pembayaran Berhasil")
+    
+    pilihan = input("Pilihan (1-5): ")
+    jenis_map = {
+        '1': 'Pengingat Pembayaran',
+        '2': 'Tagihan Belum Dibayar',
+        '3': 'Kontrak Akan Berakhir',
+        '4': 'Kontrak Berakhir',
+        '5': 'Pembayaran Berhasil'
+    }
+    
+    if pilihan not in jenis_map:
+        print("[Error] Pilihan jenis notifikasi tidak valid.")
+        return
+        
+    jenis = jenis_map[pilihan]
+    tgl_sekarang = datetime.now().strftime('%Y-%m-%d')
+    
+    # Generate ID Notifikasi
+    max_id_query = run_query_mysql("SELECT MAX(id_notifikasi) as max_id FROM Notifikasi")
+    new_id = (max_id_query[0]['max_id'] or 0) + 1
+    
+    # Insert
+    query_insert = """
+        INSERT INTO Notifikasi (id_notifikasi, id_penghuni, jenis_notifikasi, tanggal_notifikasi, status_baca)
+        VALUES (%s, %s, %s, %s, %s)
+    """
+    try:
+        run_query_mysql(query_insert, (new_id, id_penghuni, jenis, tgl_sekarang, 'Belum Dibaca'), fetch=False)
+        print(f"[Sukses] Notifikasi '{jenis}' berhasil dikirim ke {nama_tujuan}!")
+    except Exception as e:
+        print(f"[Error] Gagal mengirim notifikasi: {e}")
+
+def menu_lihat_notifikasi():
+    """Portal Penghuni: Melihat Kotak Masuk Notifikasi"""
+    print("\n--- KOTAK MASUK NOTIFIKASI ---")
+    id_input = input("Masukkan ID Penghuni Anda: ")
+    if not id_input.isdigit():
+        print("[Error] ID Penghuni harus berupa angka bulat!")
+        return
+    id_penghuni = int(id_input)
+    
+    query = """
+        SELECT id_notifikasi, jenis_notifikasi, tanggal_notifikasi, status_baca 
+        FROM Notifikasi 
+        WHERE id_penghuni = %s 
+        ORDER BY tanggal_notifikasi DESC, id_notifikasi DESC
+    """
+    data = run_query_mysql(query, (id_penghuni,))
+    
+    if not data:
+        print("Tidak ada notifikasi untuk Anda.")
+        return
+        
+    print("\nDaftar Notifikasi:")
+    ada_belum_dibaca = False
+    for idx, row in enumerate(data, 1):
+        status = "[NEW]" if row['status_baca'] == 'Belum Dibaca' else "[READ]"
+        if row['status_baca'] == 'Belum Dibaca':
+            ada_belum_dibaca = True
+        print(f"{idx}. {status} {row['tanggal_notifikasi']} - {row['jenis_notifikasi']}")
+        
+    if ada_belum_dibaca:
+        tanya = input("\nTandai semua notifikasi sebagai 'Sudah Dibaca'? (y/n): ")
+        if tanya.lower() == 'y':
+            try:
+                run_query_mysql("UPDATE Notifikasi SET status_baca = 'Sudah Dibaca' WHERE id_penghuni = %s", (id_penghuni,), fetch=False)
+                print("[Sukses] Semua notifikasi telah ditandai sebagai sudah dibaca.")
+            except Exception as e:
+                print(f"[Error] Gagal mengubah status: {e}")

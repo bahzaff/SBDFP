@@ -1,11 +1,11 @@
-nama_penghuni,jenis_kelamin,no_hp,email,alamat_asal
-Ahmad Fauzi,Laki-laki,81234567801,ahmad@gmail.com,Surabaya
-Budi Santoso,Laki-laki,81234567802,budi@gmail.com,Sidoarjo
-Citra Lestari,Perempuan,81234567803,citra@gmail.com,Malang
-Dewi Anggraini,Perempuan,81234567804,dewi@gmail.com,Gresik
-Eko Prasetyo,Laki-laki,81234567805,eko@gmail.com,Mojokerto
-Fitri Handayani,Perempuan,81234567806,fitri@gmail.com,Jombang
-Galih Saputra,Laki-laki,81234567807,galih@gmail.com,Lamongan
-Hana Putri,Perempuan,81234567808,hana@gmail.com,Kediri
-Indra Wijaya,Laki-laki,81234567809,indra@gmail.com,Tuban
-Jihan Aulia,Perempuan,81234567810,jihan@gmail.com,Madiun
+id_penghuni,nama_penghuni,jenis_kelamin,no_hp,email,alamat_asal
+1,Ahmad Fauzi,Laki-laki,81234567801,ahmad@gmail.com,Surabaya
+2,Budi Santoso,Laki-laki,81234567802,budi@gmail.com,Sidoarjo
+3,Citra Lestari,Perempuan,81234567803,citra@gmail.com,Malang
+4,Dewi Anggraini,Perempuan,81234567804,dewi@gmail.com,Gresik
+5,Eko Prasetyo,Laki-laki,81234567805,eko@gmail.com,Mojokerto
+6,Fitri Handayani,Perempuan,81234567806,fitri@gmail.com,Jombang
+7,Galih Saputra,Laki-laki,81234567807,galih@gmail.com,Lamongan
+8,Hana Putri,Perempuan,81234567808,hana@gmail.com,Kediri
+9,Indra Wijaya,Laki-laki,81234567809,indra@gmail.com,Tuban
+10,Jihan Aulia,Perempuan,81234567810,jihan@gmail.com,Madiun

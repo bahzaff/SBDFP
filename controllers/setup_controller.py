@@ -93,10 +93,8 @@ def setup_database():
             print("[MySQL] Membaca dan mem-parsing data dari file CSV...")
             
             kamar_df = pd.read_csv('data/kamar.csv')
-            kamar_df.insert(0, 'id_kamar', range(1, len(kamar_df) + 1))
             
             penghuni_df = pd.read_csv('data/penghuni.csv')
-            penghuni_df.insert(0, 'id_penghuni', range(1, len(penghuni_df) + 1))
             
             kontrak_df = pd.read_csv('data/kontrak.csv')
             kontrak_df.insert(0, 'id_kontrak', range(1, len(kontrak_df) + 1))

@@ -2,10 +2,9 @@ import re
 from config.database import get_mongo_connection
 
 def menu_cari_review_mongodb():
-    """Menu 4: Cari Review MongoDB (find() by tags/rating)"""
-    print("\n--- PENCARIAN REVIEW MONGODB ---")
-    kata_kunci = input("Masukkan keyword tag (contoh: bersih) atau tekan Enter untuk skip: ")
-    rating_input = input("Masukkan minimal rating (1-5) atau tekan Enter untuk skip: ")
+    """Menu 4: Cari Review MongoDB (find() by id_kamar)"""
+    print("\n--- PENCARIAN REVIEW KAMAR (MONGODB) ---")
+    id_kamar_input = input("Masukkan ID Kamar (contoh: 1) atau tekan Enter untuk melihat semua: ")
     
     mongo_db = get_mongo_connection()
     if mongo_db is None: return
@@ -14,12 +13,8 @@ def menu_cari_review_mongodb():
         collection = mongo_db['reviews']
         query = {}
         
-        if kata_kunci:
-            regex_pattern = re.compile(f".*{kata_kunci}.*", re.IGNORECASE)
-            query['tags'] = {"$in": [regex_pattern]}
-            
-        if rating_input.isdigit():
-            query['rating'] = {"$gte": int(rating_input)}
+        if id_kamar_input.isdigit():
+            query['id_kamar'] = int(id_kamar_input)
             
         hasil_pencarian = collection.find(query)
         
@@ -28,8 +23,12 @@ def menu_cari_review_mongodb():
             count += 1
             bintang = "★" * int(review.get('rating', 0))
             tags_str = ", ".join(review.get('tags', []))
+            id_kmr = review.get('id_kamar', '?')
+            id_png = review.get('id_penghuni', '?')
             
-            print(f"\n[{bintang}] Tags: {tags_str}")
+            print(f"\n[Kamar ID: {id_kmr}] - {bintang} (Oleh Penghuni ID: {id_png})")
+            if tags_str:
+                print(f"Tags: {tags_str}")
             print(f"Review: \"{review.get('komentar')}\"")
             
             balasan = review.get('balasan_pemilik')
@@ -39,7 +38,7 @@ def menu_cari_review_mongodb():
                 print("  -> (Belum ada balasan dari pemilik)")
                 
         if count == 0:
-            print("Tidak ada review yang cocok dengan pencarian Anda.")
+            print("Tidak ada review yang ditemukan.")
             
     except Exception as e:
         print(f"Terjadi error saat query MongoDB: {e}")

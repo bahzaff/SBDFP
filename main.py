@@ -1,6 +1,6 @@
 import sys
 from controllers.setup_controller import setup_database
-from controllers.mysql_controller import menu_cek_kamar_kosong, menu_cek_kontrak_hampir_habis, menu_rekap_tagihan_denda
+from controllers.mysql_controller import menu_cek_kamar_kosong, menu_cek_kontrak_hampir_habis, menu_rekap_tagihan_denda, menu_kirim_notifikasi, menu_lihat_notifikasi
 from controllers.mongo_controller import menu_cari_review_mongodb, menu_beri_review
 from controllers.chart_controller import menu_grafik_status_kamar, menu_grafik_distribusi_rating
 from controllers.crud_controller import menu_crud_penghuni
@@ -23,10 +23,11 @@ def menu_pemilik():
         print("5. Grafik Status Kamar (MySQL & Plotext)")
         print("6. Grafik Distribusi Rating (MongoDB & Plotext)")
         print("7. Kelola Data Penghuni (CRUD Manual MySQL)")
-        print("8. Kembali ke Gerbang Utama")
+        print("8. Kirim Notifikasi ke Penghuni (MySQL)")
+        print("9. Kembali ke Gerbang Utama")
         print("="*50)
         
-        pilihan = input("Pilih menu navigasi (0-8): ")
+        pilihan = input("Pilih menu navigasi (0-9): ")
         
         if pilihan == '0':
             setup_database()
@@ -45,6 +46,8 @@ def menu_pemilik():
         elif pilihan == '7':
             menu_crud_penghuni()
         elif pilihan == '8':
+            menu_kirim_notifikasi()
+        elif pilihan == '9':
             break
         else:
             print("Pilihan menu tidak valid, silakan coba lagi.")
@@ -56,14 +59,17 @@ def menu_penghuni():
         print("="*50)
         print("1. Lihat Review & Ulasan Kamar (MongoDB)")
         print("2. Berikan/Ubah Review Kamar (Khusus Penghuni)")
+        print("3. Lihat Kotak Masuk Notifikasi (MySQL)")
         print("0. Kembali ke Gerbang Utama")
         print("="*50)
         
-        pilihan = input("Pilih menu navigasi (0-2): ")
+        pilihan = input("Pilih menu navigasi (0-3): ")
         if pilihan == '1':
             menu_cari_review_mongodb()
         elif pilihan == '2':
             menu_beri_review()
+        elif pilihan == '3':
+            menu_lihat_notifikasi()
         elif pilihan == '0':
             break
         else:
