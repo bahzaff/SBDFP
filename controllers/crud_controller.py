@@ -9,8 +9,8 @@ def menu_crud_penghuni():
         print("="*40)
         print("1. Tambah Penghuni (CREATE)")
         print("2. Lihat Daftar Penghuni (READ)")
-        print("3. Ubah Data Penghuni (UPDATE)")
-        print("4. Hapus Penghuni (DELETE)")
+        print("3. Selesaikan Kontrak Penghuni (UPDATE)")
+        print("4. Bersihkan Notifikasi Lama (DELETE)")
         print("0. Kembali ke Menu Utama")
         print("="*40)
         
@@ -137,7 +137,42 @@ def _create_penghuni():
                     q_update_kamar = "UPDATE Kamar SET status_kamar = 'Terisi' WHERE id_kamar = %s"
                     run_query_mysql(q_update_kamar, (id_kamar_pilihan,), fetch=False)
                     
-                    print(f"[Sukses Luar Biasa] Penghuni '{nama}' resmi menempati Kamar '{kamar_valid['nomor_kamar']}' selama {durasi_bulan} Bulan ke depan!")
+                    # 6. Fitur Pembayaran Tagihan Pertama
+                    harga_kamar = kamar_valid['harga_sewa']
+                    print(f"\n--- PEMBAYARAN TAGIHAN PERTAMA ---")
+                    print(f"Total Tagihan Bulan Pertama: Rp {harga_kamar:,.0f}")
+                    
+                    while True:
+                        uang_input = input("Masukkan jumlah uang yang dibayarkan sekarang (Rp): ")
+                        if uang_input.isdigit() and int(uang_input) >= 0:
+                            uang_dibayar = int(uang_input)
+                            break
+                        print("[Error] Masukkan nominal uang yang valid!")
+                        
+                    if uang_dibayar >= harga_kamar:
+                        status_bayar = 'Lunas'
+                        uang_dibayar = harga_kamar # Normalisasi jika bayar lebih
+                        print("=> Status Pembayaran: LUNAS")
+                    else:
+                        status_bayar = 'Belum Lunas'
+                        print(f"=> Status Pembayaran: BELUM LUNAS (Hanya DP, Kurang Rp {harga_kamar - uang_dibayar:,.0f})")
+                        
+                    # Generate ID Pembayaran & Insert
+                    max_pb = run_query_mysql("SELECT MAX(id_pembayaran) as max_id FROM Pembayaran")
+                    new_id_pb = (max_pb[0]['max_id'] or 0) + 1 if max_pb else 1
+                    
+                    bulan_indo = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+                    nama_bulan = f"{bulan_indo[tgl_mulai.month - 1]} {tgl_mulai.year}"
+                    tgl_jatuh_tempo = tgl_mulai + timedelta(days=7)
+                    
+                    q_pb = """
+                        INSERT INTO Pembayaran (id_pembayaran, id_kontrak, bulan_tagihan, tanggal_jatuh_tempo, tanggal_bayar, jumlah_bayar, status_bayar)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    """
+                    p_pb = (new_id_pb, new_id_kontrak, nama_bulan, tgl_jatuh_tempo.strftime('%Y-%m-%d'), tgl_mulai.strftime('%Y-%m-%d'), uang_dibayar, status_bayar)
+                    run_query_mysql(q_pb, p_pb, fetch=False)
+                    
+                    print(f"\n[Sukses Luar Biasa] Penghuni '{nama}' resmi menempati Kamar '{kamar_valid['nomor_kamar']}' selama {durasi_bulan} Bulan ke depan dan Tagihan Pertama berhasil dicatat!")
                     break
                 else:
                     print("[Error] ID Kamar tidak ditemukan atau sedang tidak tersedia! Pilih ID yang ada di daftar.")
@@ -161,47 +196,11 @@ def _read_penghuni():
         print("Belum ada data penghuni di database.")
 
 def _update_penghuni():
-    print("\n--- UBAH DATA PENGHUNI (UPDATE) ---")
+    print("\n--- SELESAIKAN KONTRAK PENGHUNI (UPDATE) ---")
     _read_penghuni() # Tampilkan data agar user bisa melihat ID-nya
     
     try:
-        print("\nMasukkan ID Penghuni yang ingin diubah...")
-        id_input = input("ID: ")
-        if not id_input.isdigit():
-            print("[Error] Input ID harus berupa angka bulat!")
-            return
-        id_penghuni = int(id_input)
-        
-        # Cek apakah ID ada
-        cek = run_query_mysql("SELECT id_penghuni FROM Penghuni WHERE id_penghuni = %s", (id_penghuni,))
-        if not cek:
-            print(f"[Error] Data dengan ID {id_penghuni} tidak ditemukan!")
-            return
-            
-        nama_baru = input("Masukkan Nama Baru: ")
-        
-        # Validasi No HP
-        while True:
-            hp_baru = input("Masukkan No HP Baru (Minimal 10 angka): ")
-            if hp_baru.isdigit() and len(hp_baru) >= 10:
-                break
-            print("[Error] No HP tidak valid! Harus berupa deretan angka minimal 10 digit tanpa spasi.")
-        
-        # RAW SQL QUERY UPDATE
-        query = "UPDATE Penghuni SET nama_penghuni = %s, no_hp = %s WHERE id_penghuni = %s"
-        params = (nama_baru, hp_baru, id_penghuni)
-        
-        run_query_mysql(query, params, fetch=False)
-        print(f"[Sukses] Permintaan pembaruan data ID {id_penghuni} dikirim ke MySQL!")
-    except Exception as e:
-        print(f"[Error] Terjadi kesalahan: {e}")
-
-def _delete_penghuni():
-    print("\n--- HAPUS DATA PENGHUNI (DELETE) ---")
-    _read_penghuni()
-    
-    try:
-        print("\nMasukkan ID Penghuni yang ingin dihapus...")
+        print("\nMasukkan ID Penghuni yang akan diselesaikan kontraknya...")
         id_input = input("ID: ")
         if not id_input.isdigit():
             print("[Error] Input ID harus berupa angka bulat!")
@@ -219,12 +218,12 @@ def _delete_penghuni():
         kontrak_aktif = run_query_mysql(q_kontrak, (id_penghuni,))
         
         if not kontrak_aktif:
-            print(f"[Info] Penghuni ID {id_penghuni} saat ini tidak memiliki kamar / kontrak aktif yang bisa dihapus.")
+            print(f"[Info] Penghuni ID {id_penghuni} saat ini tidak memiliki kamar / kontrak aktif yang bisa di-checkout.")
             return
             
-        print(f"\n[PERINGATAN] Penghapusan (Delete) ini akan mengakhiri kontrak penghuni dan mengubah status kamar menjadi 'Tersedia'.")
+        print(f"\n[PERINGATAN] Proses ini akan mengakhiri kontrak penghuni dan mengubah status kamar menjadi 'Tersedia'.")
         print("Data riwayat pembayaran dan penghuni TETAP AMAN (Tidak Dihapus dari Database).")
-        konfirmasi = input(f"Yakin memproses Hapus Penghuni ID {id_penghuni}? (y/n): ")
+        konfirmasi = input(f"Yakin memproses Checkout Penghuni ID {id_penghuni}? (y/n): ")
         
         if konfirmasi.lower() == 'y':
             # 1. Update Kontrak jadi Selesai
@@ -234,7 +233,42 @@ def _delete_penghuni():
             for k in kontrak_aktif:
                 run_query_mysql("UPDATE Kamar SET status_kamar = 'Tersedia' WHERE id_kamar = %s", (k['id_kamar'],), fetch=False)
                 
-            print(f"[Sukses] Proses Hapus ID {id_penghuni} berhasil! Kamar telah dibebaskan.")
+            print(f"[Sukses] Proses Checkout ID {id_penghuni} berhasil! Kamar telah dibebaskan.")
+        else:
+            print("Dibatalkan.")
+    except Exception as e:
+        print(f"[Error] Terjadi kesalahan saat memproses checkout: {e}")
+
+def _delete_penghuni():
+    print("\n--- BERSIHKAN KOTAK MASUK NOTIFIKASI (DELETE) ---")
+    _read_penghuni()
+    
+    try:
+        print("\nMasukkan ID Penghuni yang ingin dibersihkan notifikasinya...")
+        id_input = input("ID: ")
+        if not id_input.isdigit():
+            print("[Error] Input ID harus berupa angka bulat!")
+            return
+        id_penghuni = int(id_input)
+        
+        # Cek notifikasi yang sudah dibaca
+        q_notif = "SELECT * FROM Notifikasi WHERE id_penghuni = %s AND status_baca = 'Sudah Dibaca'"
+        notif_lama = run_query_mysql(q_notif, (id_penghuni,))
+        
+        if not notif_lama:
+            print(f"[Info] Penghuni ID {id_penghuni} tidak memiliki notifikasi lama ('Sudah Dibaca') yang bisa dihapus.")
+            return
+            
+        print(f"\nDitemukan {len(notif_lama)} notifikasi lama untuk Penghuni ID {id_penghuni}.")
+        for n in notif_lama:
+            print(f"- {n['tanggal_notifikasi']} | {n['jenis_notifikasi']}")
+            
+        konfirmasi = input(f"\nYakin menghapus secara permanen {len(notif_lama)} notifikasi ini? (y/n): ")
+        
+        if konfirmasi.lower() == 'y':
+            # Eksekusi Hard Delete murni
+            run_query_mysql("DELETE FROM Notifikasi WHERE id_penghuni = %s AND status_baca = 'Sudah Dibaca'", (id_penghuni,), fetch=False)
+            print(f"[Sukses] Proses Delete Murni berhasil! Notifikasi lama telah lenyap dari database.")
         else:
             print("Dibatalkan.")
     except Exception as e:

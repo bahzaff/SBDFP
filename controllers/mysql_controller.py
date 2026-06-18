@@ -22,7 +22,7 @@ def menu_cek_kontrak_hampir_habis():
         FROM Kontrak ko
         JOIN Penghuni p ON ko.id_penghuni = p.id_penghuni
         JOIN Kamar k ON ko.id_kamar = k.id_kamar
-        WHERE DATEDIFF(ko.tanggal_selesai, CURDATE()) BETWEEN -30 AND 90
+        WHERE DATEDIFF(ko.tanggal_selesai, CURDATE()) BETWEEN -30 AND 30
           AND ko.status_kontrak = 'Aktif'
         ORDER BY ko.tanggal_selesai ASC
     """
